@@ -6,7 +6,7 @@ namespace FormulaAirline.API.Services
 {
     public class MessageProducer : IMessageProducer
     {
-        public async void SendingMessage<T>(T message)
+        public void SendingMessage<T>(T message)
         {
             var factory = new ConnectionFactory()
             {
@@ -16,16 +16,16 @@ namespace FormulaAirline.API.Services
                 VirtualHost = "/"
             };
 
-            var conn = await factory.CreateConnectionAsync();
+            var conn = factory.CreateConnection();
 
-            using var channel = await conn.CreateChannelAsync();
+            using var channel = conn.CreateModel();
 
-            await channel.QueueDeclareAsync("bookings", durable: true, exclusive: true);
+            channel.QueueDeclare("bookings", durable: true, exclusive: false);
 
             var jsonString = JsonSerializer.Serialize(message);
             var body = Encoding.UTF8.GetBytes(jsonString);
 
-            await channel.BasicPublishAsync("", "bookings", body: body);
+            channel.BasicPublish("", "bookings", body: body);
         }
     }
 }

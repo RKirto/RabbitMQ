@@ -10,24 +10,22 @@ var factory = new ConnectionFactory()
     VirtualHost = "/"
 };
 
-var conn = await factory.CreateConnectionAsync();
+var conn = factory.CreateConnection();
 
-using var channel = await conn.CreateChannelAsync();
+using var channel = conn.CreateModel();
 
-await channel.QueueDeclareAsync("bookings", durable: true, exclusive: true);
+channel.QueueDeclare("bookings", durable: true, exclusive: false);
 
-var consumer = new AsyncEventingBasicConsumer(channel);
+var consumer = new EventingBasicConsumer(channel);
 
-consumer.ReceivedAsync += async (model, eventArgs) =>
+consumer.Received += (model, eventArgs) =>
 {
-    // byte[]
     var body = eventArgs.Body.ToArray();
     var message = Encoding.UTF8.GetString(body);
 
     Console.WriteLine($"message has been received - {message}");
-
-    await Task.CompletedTask;
 };
 
-await channel.BasicConsumeAsync("bookings", true, consumer);
+channel.BasicConsume("bookings", true, consumer);
+
 Console.ReadKey();
